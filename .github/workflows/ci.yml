@@ -1,0 +1,35 @@
+name: CI - Train Titanic Model
+
+on:
+  push:
+    paths:
+      - 'MLProject/**'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  train-model:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install pandas scikit-learn mlflow joblib
+
+      - name: Run MLflow Project
+        run: |
+          cd MLProject
+          mlflow run . --env-manager=local
+
+      - name: Upload model.pkl as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: trained-model
+          path: MLProject/artifacts/model.pkl
