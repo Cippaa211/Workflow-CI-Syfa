@@ -1,7 +1,7 @@
 # modelling.py
 
-import joblib
 import os
+import joblib
 import pandas as pd
 import mlflow
 import mlflow.sklearn
@@ -10,10 +10,14 @@ from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 
-# ====================== Load Data ==========================
+# ====================== MLflow Setup =======================
+mlflow.set_tracking_uri("file:./mlruns")  # Aman untuk GitHub Actions
+mlflow.set_experiment("CI_Titanic_LogReg")  # Akan dibuat otomatis jika belum ada
+
+# ====================== Load Dataset =======================
 df = pd.read_csv('dataset_preprocessing/dataset_preprocessed_train.csv')
 
-# ====================== Feature Engineering ==================
+# ================== Feature Engineering ====================
 df["FamilySize"] = df["SibSp"] + df["Parch"] + 1
 df["IsAlone"] = (df["FamilySize"] == 1).astype(int)
 
@@ -30,12 +34,12 @@ y = df["Survived"]
 scaler = StandardScaler()
 X = scaler.fit_transform(X)
 
-# ====================== Train Test Split ====================
+# ====================== Split Data ==========================
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
 
-# ====================== Hyperparameter Tuning ===============
+# ================= Hyperparameter Tuning ====================
 param_grid = {
     "C": [0.01, 0.1, 1, 10, 50, 100],
     "solver": ["liblinear", "lbfgs"],
@@ -45,19 +49,19 @@ param_grid = {
 grid_search = GridSearchCV(
     LogisticRegression(), param_grid, cv=5, scoring='f1', verbose=0, n_jobs=-1
 )
-
 grid_search.fit(X_train, y_train)
+
 best_model = grid_search.best_estimator_
 best_params = grid_search.best_params_
 
-# ====================== MLflow Logging =======================
-# CATATAN: Tidak memakai mlflow.start_run() agar tidak konflik saat dijalankan via `mlflow run`
+# ===================== MLflow Logging =======================
+# Tidak menggunakan mlflow.start_run() manual — biarkan MLflow CLI yang tangani
 
 # Logging parameter terbaik
 for param_name, value in best_params.items():
     mlflow.log_param(param_name, value)
 
-# Inference & metrik
+# Prediksi dan evaluasi
 y_pred = best_model.predict(X_test)
 acc = accuracy_score(y_test, y_pred)
 prec = precision_score(y_test, y_pred)
@@ -65,17 +69,20 @@ rec = recall_score(y_test, y_pred)
 f1 = f1_score(y_test, y_pred)
 roc_auc = roc_auc_score(y_test, y_pred)
 
-mlflow.log_metric("accuracy", acc)
-mlflow.log_metric("precision", prec)
-mlflow.log_metric("recall", rec)
-mlflow.log_metric("f1_score", f1)
-mlflow.log_metric("roc_auc_score", roc_auc)
+mlflow.log_metrics({
+    "accuracy": acc,
+    "precision": prec,
+    "recall": rec,
+    "f1_score": f1,
+    "roc_auc_score": roc_auc
+})
 
-# Log model ke MLflow artifacts
-mlflow.sklearn.log_model(best_model, "model")
+# Simpan model ke MLflow artifact
+mlflow.sklearn.log_model(best_model, artifact_path="model")
 
-# Simpan model secara manual ke file .pkl untuk disimpan di repo
+# Simpan model manual ke .pkl (untuk diupload via GitHub Actions)
 os.makedirs("artifacts", exist_ok=True)
 joblib.dump(best_model, "artifacts/model.pkl")
+
 print("[CI RUN] Model disimpan ke artifacts/model.pkl")
 print(f"[CI RUN] Akurasi: {acc:.4f} | F1 Score: {f1:.4f}")
