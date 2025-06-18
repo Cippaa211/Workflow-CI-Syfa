@@ -1,5 +1,3 @@
-# modelling.py
-
 import os
 import joblib
 import pandas as pd
@@ -55,34 +53,33 @@ best_model = grid_search.best_estimator_
 best_params = grid_search.best_params_
 
 # ===================== MLflow Logging =======================
-with mlflow.start_run():  # ⛳️ Penting untuk menghindari run ID conflict di GitHub Actions
 
-    # Logging parameter terbaik
-    for param_name, value in best_params.items():
-        mlflow.log_param(param_name, value)
+# Logging parameter terbaik
+for param_name, value in best_params.items():
+    mlflow.log_param(param_name, value)
 
-    # Prediksi dan evaluasi
-    y_pred = best_model.predict(X_test)
-    acc = accuracy_score(y_test, y_pred)
-    prec = precision_score(y_test, y_pred)
-    rec = recall_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred)
-    roc_auc = roc_auc_score(y_test, y_pred)
+# Prediksi dan evaluasi
+y_pred = best_model.predict(X_test)
+acc = accuracy_score(y_test, y_pred)
+prec = precision_score(y_test, y_pred)
+rec = recall_score(y_test, y_pred)
+f1 = f1_score(y_test, y_pred)
+roc_auc = roc_auc_score(y_test, y_pred)
 
-    mlflow.log_metrics({
-        "accuracy": acc,
-        "precision": prec,
-        "recall": rec,
-        "f1_score": f1,
-        "roc_auc_score": roc_auc
-    })
+mlflow.log_metrics({
+    "accuracy": acc,
+    "precision": prec,
+    "recall": rec,
+    "f1_score": f1,
+    "roc_auc_score": roc_auc
+})
 
-    # Simpan model ke MLflow artifact
-    mlflow.sklearn.log_model(best_model, artifact_path="model")
+# Simpan model ke MLflow artifact
+mlflow.sklearn.log_model(best_model, artifact_path="model")
 
-    # Simpan model manual ke artifacts (untuk upload GitHub Actions)
-    os.makedirs("artifacts", exist_ok=True)
-    joblib.dump(best_model, "artifacts/model.pkl")
+# Simpan model manual ke artifacts (untuk upload GitHub Actions)
+os.makedirs("artifacts", exist_ok=True)
+joblib.dump(best_model, "artifacts/model.pkl")
 
-    print("[CI RUN] Model disimpan ke artifacts/model.pkl")
-    print(f"[CI RUN] Akurasi: {acc:.4f} | F1 Score: {f1:.4f}")
+print("[CI RUN] Model disimpan ke artifacts/model.pkl")
+print(f"[CI RUN] Akurasi: {acc:.4f} | F1 Score: {f1:.4f}")
