@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/acer/Pictures/belajar%20coding%20cantik/Membangun%20Sistem%20Machine%20Learning/Workflow-CI/MLProject/mlruns/538847898317574318/a79315ae1b2c42f1b82d1ad4a8f625d2/artifacts
+end_time: 1750228148504
+entry_point_name: ''
+experiment_id: '538847898317574318'
+lifecycle_stage: active
+run_id: a79315ae1b2c42f1b82d1ad4a8f625d2
+run_name: ci-run
+run_uuid: a79315ae1b2c42f1b82d1ad4a8f625d2
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1750228125005
+status: 3
+tags: []
+user_id: acer
